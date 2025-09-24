@@ -59,6 +59,74 @@ public class ConversationController {
         return Result.success(messages);
     }
     
+    @Operation(summary = "创建新对话")
+    @PostMapping
+    public Result<ConversationResponse> createConversation(@RequestBody CreateConversationRequest request) {
+        Long userId = 1L; // 简化处理
+        
+        if (request.getCharacterId() == null) {
+            return Result.error("角色ID不能为空");
+        }
+        
+        Conversation conversation = conversationService.createConversation(userId, request.getCharacterId(), request.getTitle());
+        
+        ConversationResponse response = new ConversationResponse();
+        response.setId(conversation.getId());
+        response.setTitle(conversation.getTitle());
+        response.setCharacterId(conversation.getCharacterId());
+        response.setMessageCount(conversation.getMessageCount());
+        
+        return Result.success(response);
+    }
+    
+    @Operation(summary = "删除对话")
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteConversation(@PathVariable Long id) {
+        Long userId = 1L; // 简化处理
+        
+        boolean success = conversationService.deleteConversation(userId, id);
+        if (success) {
+            return Result.success();
+        } else {
+            return Result.error("删除失败，对话不存在或无权限");
+        }
+    }
+    
+    @Operation(summary = "更新对话标题")
+    @PutMapping("/{id}/title")
+    public Result<Void> updateConversationTitle(@PathVariable Long id, @RequestBody UpdateTitleRequest request) {
+        Long userId = 1L; // 简化处理
+        
+        boolean success = conversationService.updateConversationTitle(userId, id, request.getTitle());
+        if (success) {
+            return Result.success();
+        } else {
+            return Result.error("更新失败，对话不存在或无权限");
+        }
+    }
+    
+    @Operation(summary = "获取对话详情")
+    @GetMapping("/{id}")
+    public Result<ConversationDetailResponse> getConversationDetail(@PathVariable Long id) {
+        Conversation conversation = conversationService.getById(id);
+        if (conversation == null) {
+            return Result.error("对话不存在");
+        }
+        
+        List<Message> messages = conversationService.getConversationMessages(id);
+        
+        ConversationDetailResponse response = new ConversationDetailResponse();
+        response.setId(conversation.getId());
+        response.setTitle(conversation.getTitle());
+        response.setCharacterId(conversation.getCharacterId());
+        response.setMessageCount(conversation.getMessageCount());
+        response.setMessages(messages);
+        response.setCreateTime(conversation.getCreateTime());
+        response.setUpdateTime(conversation.getUpdateTime());
+        
+        return Result.success(response);
+    }
+    
     @Data
     public static class ChatRequest {
         private Long conversationId;
@@ -70,5 +138,35 @@ public class ConversationController {
     @Data
     public static class ChatResponse {
         private String response;
+    }
+    
+    @Data
+    public static class CreateConversationRequest {
+        private Long characterId;
+        private String title;
+    }
+    
+    @Data
+    public static class UpdateTitleRequest {
+        private String title;
+    }
+    
+    @Data
+    public static class ConversationResponse {
+        private Long id;
+        private String title;
+        private Long characterId;
+        private Integer messageCount;
+    }
+    
+    @Data
+    public static class ConversationDetailResponse {
+        private Long id;
+        private String title;
+        private Long characterId;
+        private Integer messageCount;
+        private List<Message> messages;
+        private java.time.LocalDateTime createTime;
+        private java.time.LocalDateTime updateTime;
     }
 }

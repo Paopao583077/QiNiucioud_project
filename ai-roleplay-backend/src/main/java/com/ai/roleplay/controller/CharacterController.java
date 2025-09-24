@@ -42,4 +42,33 @@ public class CharacterController {
         List<CharacterSkill> skills = characterService.getCharacterSkills(id);
         return Result.success(skills);
     }
+    
+    @Operation(summary = "获取所有角色分类")
+    @GetMapping("/categories")
+    public Result<List<String>> getCharacterCategories() {
+        List<String> categories = characterService.getAllCategories();
+        return Result.success(categories);
+    }
+    
+    @Operation(summary = "根据分类获取角色")
+    @GetMapping("/category/{category}")
+    public Result<List<Character>> getCharactersByCategory(@PathVariable String category) {
+        List<Character> characters = characterService.getCharactersByCategory(category);
+        return Result.success(characters);
+    }
+    
+    @Operation(summary = "获取热门角色")
+    @GetMapping("/popular")
+    public Result<List<Character>> getPopularCharacters(@RequestParam(defaultValue = "10") Integer limit) {
+        List<Character> characters = characterService.getPopularCharacters(limit);
+        return Result.success(characters);
+    }
+    
+    @Operation(summary = "获取推荐角色")
+    @GetMapping("/recommended")
+    public Result<List<Character>> getRecommendedCharacters() {
+        Long userId = 1L; // 简化处理
+        List<Character> characters = characterService.getRecommendedCharacters(userId);
+        return Result.success(characters);
+    }
 }

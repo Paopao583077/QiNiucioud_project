@@ -39,4 +39,46 @@ public class CharacterService extends ServiceImpl<CharacterMapper, Character> {
     public CharacterSkill getSkillById(Long skillId) {
         return characterSkillMapper.selectById(skillId);
     }
+    
+    public List<String> getAllCategories() {
+        QueryWrapper<Character> wrapper = new QueryWrapper<>();
+        wrapper.select("DISTINCT category");
+        wrapper.eq("status", 1);
+        wrapper.isNotNull("category");
+        
+        return list(wrapper).stream()
+                .map(Character::getCategory)
+                .distinct()
+                .sorted()
+                .toList();
+    }
+    
+    public List<Character> getCharactersByCategory(String category) {
+        QueryWrapper<Character> wrapper = new QueryWrapper<>();
+        wrapper.eq("status", 1);
+        wrapper.eq("category", category);
+        wrapper.orderByDesc("create_time");
+        
+        return list(wrapper);
+    }
+    
+    public List<Character> getPopularCharacters(Integer limit) {
+        // 这里简化实现，实际应该根据对话数量等指标排序
+        QueryWrapper<Character> wrapper = new QueryWrapper<>();
+        wrapper.eq("status", 1);
+        wrapper.orderByDesc("create_time");
+        wrapper.last("LIMIT " + limit);
+        
+        return list(wrapper);
+    }
+    
+    public List<Character> getRecommendedCharacters(Long userId) {
+        // 这里简化实现，实际应该根据用户历史对话推荐
+        QueryWrapper<Character> wrapper = new QueryWrapper<>();
+        wrapper.eq("status", 1);
+        wrapper.orderByDesc("create_time");
+        wrapper.last("LIMIT 5");
+        
+        return list(wrapper);
+    }
 }

@@ -64,6 +64,18 @@ ai:
       access-key-secret: your-aliyun-access-key-secret
       app-key: your-aliyun-app-key
 
+# 文件上传配置
+file:
+  upload:
+    path: ./uploads
+    max-size: 10485760 # 10MB
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 # 日志配置
 logging:
   level:

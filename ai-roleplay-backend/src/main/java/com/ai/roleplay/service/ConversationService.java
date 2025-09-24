@@ -194,4 +194,51 @@ public class ConversationService extends ServiceImpl<ConversationMapper, Convers
         wrapper.orderByAsc("create_time");
         return messageMapper.selectList(wrapper);
     }
+    
+    @Transactional
+    public Conversation createConversation(Long userId, Long characterId, String title) {
+        // 验证角色是否存在
+        Character character = characterService.getById(characterId);
+        if (character == null) {
+            throw new IllegalArgumentException("角色不存在");
+        }
+        
+        Conversation conversation = new Conversation();
+        conversation.setUserId(userId);
+        conversation.setCharacterId(characterId);
+        conversation.setTitle(title != null ? title : "与" + character.getName() + "的对话");
+        conversation.setMessageCount(0);
+        
+        save(conversation);
+        return conversation;
+    }
+    
+    @Transactional
+    public boolean deleteConversation(Long userId, Long conversationId) {
+        Conversation conversation = getById(conversationId);
+        if (conversation == null || !conversation.getUserId().equals(userId)) {
+            return false;
+        }
+        
+        // 删除对话相关的消息
+        QueryWrapper<Message> messageWrapper = new QueryWrapper<>();
+        messageWrapper.eq("conversation_id", conversationId);
+        messageMapper.delete(messageWrapper);
+        
+        // 删除对话
+        removeById(conversationId);
+        return true;
+    }
+    
+    @Transactional
+    public boolean updateConversationTitle(Long userId, Long conversationId, String title) {
+        Conversation conversation = getById(conversationId);
+        if (conversation == null || !conversation.getUserId().equals(userId)) {
+            return false;
+        }
+        
+        conversation.setTitle(title);
+        updateById(conversation);
+        return true;
+    }
 }

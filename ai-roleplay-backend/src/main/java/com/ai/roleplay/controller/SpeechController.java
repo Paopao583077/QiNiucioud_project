@@ -48,4 +48,58 @@ public class SpeechController {
             return new byte[0];
         }
     }
+    
+    @Operation(summary = "获取支持的语音列表")
+    @GetMapping("/voices")
+    public Result<java.util.List<VoiceInfo>> getSupportedVoices() {
+        java.util.List<VoiceInfo> voices = new java.util.ArrayList<>();
+        
+        voices.add(new VoiceInfo("xiaoyun", "小云", "女声", "温柔"));
+        voices.add(new VoiceInfo("xiaogang", "小刚", "男声", "稳重"));
+        voices.add(new VoiceInfo("xiaomeng", "小萌", "女声", "活泼"));
+        voices.add(new VoiceInfo("xiaofeng", "小峰", "男声", "磁性"));
+        
+        return Result.success(voices);
+    }
+    
+    @Operation(summary = "语音格式转换")
+    @PostMapping("/convert")
+    public Result<String> convertAudioFormat(@RequestParam("audio") MultipartFile audioFile,
+                                           @RequestParam(defaultValue = "wav") String targetFormat) {
+        try {
+            if (audioFile.isEmpty()) {
+                return Result.error("音频文件不能为空");
+            }
+            
+            // 这里简化实现，实际需要音频格式转换逻辑
+            String convertedUrl = "/audio/converted/" + System.currentTimeMillis() + "." + targetFormat;
+            return Result.success(convertedUrl);
+        } catch (Exception e) {
+            return Result.error("音频转换失败: " + e.getMessage());
+        }
+    }
+    
+    public static class VoiceInfo {
+        private String id;
+        private String name;
+        private String gender;
+        private String style;
+        
+        public VoiceInfo(String id, String name, String gender, String style) {
+            this.id = id;
+            this.name = name;
+            this.gender = gender;
+            this.style = style;
+        }
+        
+        // getters and setters
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getGender() { return gender; }
+        public void setGender(String gender) { this.gender = gender; }
+        public String getStyle() { return style; }
+        public void setStyle(String style) { this.style = style; }
+    }
 }
