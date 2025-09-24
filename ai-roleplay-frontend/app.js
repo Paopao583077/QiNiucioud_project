@@ -52,9 +52,13 @@ class AiRoleplayApp {
                 `${this.baseUrl}/characters/search`;
                 
             const response = await fetch(url);
-            const characters = await response.json();
+            const result = await response.json();
             
-            this.renderCharacters(characters);
+            if (result.code === 200) {
+                this.renderCharacters(result.data);
+            } else {
+                this.showError(result.message || '加载角色失败');
+            }
         } catch (error) {
             console.error('加载角色失败:', error);
             this.showError('加载角色失败，请检查后端服务是否启动');
@@ -118,10 +122,14 @@ class AiRoleplayApp {
     async loadCharacterSkills(characterId) {
         try {
             const response = await fetch(`${this.baseUrl}/characters/${characterId}/skills`);
-            const skills = await response.json();
+            const result = await response.json();
             
-            this.renderSkills(skills);
-            this.skillsSection.style.display = skills.length > 0 ? 'block' : 'none';
+            if (result.code === 200) {
+                this.renderSkills(result.data);
+                this.skillsSection.style.display = result.data.length > 0 ? 'block' : 'none';
+            } else {
+                console.error('加载技能失败:', result.message);
+            }
         } catch (error) {
             console.error('加载技能失败:', error);
         }
@@ -176,6 +184,7 @@ class AiRoleplayApp {
                 },
                 body: JSON.stringify({
                     conversationId: this.currentConversation,
+                    characterId: this.currentCharacter?.id,
                     content: content,
                     skillId: this.selectedSkill?.id
                 })
@@ -183,8 +192,12 @@ class AiRoleplayApp {
             
             const result = await response.json();
             
-            // 显示AI回复
-            this.addMessage('assistant', result.response);
+            if (result.code === 200) {
+                // 显示AI回复
+                this.addMessage('assistant', result.data.response);
+            } else {
+                this.addMessage('assistant', result.message || '抱歉，我现在无法回应，请稍后再试。');
+            }
             
             // 如果使用了技能，显示技能标识
             if (this.selectedSkill) {

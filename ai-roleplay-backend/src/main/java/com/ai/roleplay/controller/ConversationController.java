@@ -1,15 +1,16 @@
 package com.ai.roleplay.controller;
 
+import com.ai.roleplay.common.Result;
 import com.ai.roleplay.entity.Conversation;
 import com.ai.roleplay.entity.Message;
 import com.ai.roleplay.service.ConversationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Tag(name = "对话管理", description = "对话相关接口")
 @RestController
@@ -21,46 +22,53 @@ public class ConversationController {
     
     @Operation(summary = "发送消息")
     @PostMapping("/chat")
-    public Map<String, String> chat(@RequestBody ChatRequest request) {
+    public Result<ChatResponse> chat(@RequestBody ChatRequest request) {
         // 这里简化处理，实际应该从JWT中获取用户ID
         Long userId = 1L;
         
+        if (request.getContent() == null || request.getContent().trim().isEmpty()) {
+            return Result.error("消息内容不能为空");
+        }
+        
         String response = conversationService.chat(
             userId, 
-            request.getConversationId(), 
+            request.getConversationId(),
+            request.getCharacterId(),
             request.getContent(),
             request.getSkillId()
         );
         
-        return Map.of("response", response);
+        ChatResponse chatResponse = new ChatResponse();
+        chatResponse.setResponse(response);
+        return Result.success(chatResponse);
     }
     
     @Operation(summary = "获取用户对话列表")
     @GetMapping
-    public List<Conversation> getUserConversations() {
+    public Result<List<Conversation>> getUserConversations() {
         // 这里简化处理，实际应该从JWT中获取用户ID
         Long userId = 1L;
-        return conversationService.getUserConversations(userId);
+        List<Conversation> conversations = conversationService.getUserConversations(userId);
+        return Result.success(conversations);
     }
     
     @Operation(summary = "获取对话消息")
     @GetMapping("/{id}/messages")
-    public List<Message> getConversationMessages(@PathVariable Long id) {
-        return conversationService.getConversationMessages(id);
+    public Result<List<Message>> getConversationMessages(@PathVariable Long id) {
+        List<Message> messages = conversationService.getConversationMessages(id);
+        return Result.success(messages);
     }
     
-    // 内部类定义请求体
+    @Data
     public static class ChatRequest {
         private Long conversationId;
+        private Long characterId;
         private String content;
         private Long skillId;
-        
-        // getters and setters
-        public Long getConversationId() { return conversationId; }
-        public void setConversationId(Long conversationId) { this.conversationId = conversationId; }
-        public String getContent() { return content; }
-        public void setContent(String content) { this.content = content; }
-        public Long getSkillId() { return skillId; }
-        public void setSkillId(Long skillId) { this.skillId = skillId; }
+    }
+    
+    @Data
+    public static class ChatResponse {
+        private String response;
     }
 }

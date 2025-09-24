@@ -80,15 +80,74 @@ public class ConversationService extends ServiceImpl<ConversationMapper, Convers
         return response;
     }
     
-    private Conversation getOrCreateConversation(Long userId, Long conversationId) {
+    @Transactional
+    public String chat(Long userId, Long conversationId, Long characterId, String content, Long skillId) {
+        // 获取或创建对话
+        Conversation conversation = getOrCreateConversation(userId, conversationId, characterId);
+        
+        // 保存用户消息
+        Message userMessage = new Message();
+        userMessage.setConversationId(conversation.getId());
+        userMessage.setRole("user");
+        userMessage.setContent(content);
+        messageMapper.insert(userMessage);
+        
+        // 获取角色信息
+        Character character = characterService.getById(conversation.getCharacterId());
+        
+        // 获取对话历史
+        List<Message> history = getConversationHistory(conversation.getId(), 10);
+        List<Map<String, String>> messages = convertToAiMessages(history);
+        
+        String response;
+        String skillUsed = null;
+        
+        if (skillId != null) {
+            // 使用技能回复
+            CharacterSkill skill = characterService.getSkillById(skillId);
+            if (skill != null) {
+                response = zhipuAiService.chatWithSkill(
+                    character.getSystemPrompt(), 
+                    skill.getSkillPrompt(), 
+                    content
+                );
+                skillUsed = skill.getSkillName();
+            } else {
+                response = zhipuAiService.chat(character.getSystemPrompt(), messages);
+            }
+        } else {
+            // 普通对话
+            response = zhipuAiService.chat(character.getSystemPrompt(), messages);
+        }
+        
+        // 保存AI回复
+        Message aiMessage = new Message();
+        aiMessage.setConversationId(conversation.getId());
+        aiMessage.setRole("assistant");
+        aiMessage.setContent(response);
+        aiMessage.setSkillUsed(skillUsed);
+        messageMapper.insert(aiMessage);
+        
+        // 更新对话消息数量
+        conversation.setMessageCount(conversation.getMessageCount() + 2);
+        updateById(conversation);
+        
+        return response;
+    }
+    
+    private Conversation getOrCreateConversation(Long userId, Long conversationId, Long characterId) {
         if (conversationId != null) {
             return getById(conversationId);
         }
         
-        // 创建新对话 - 这里默认使用第一个角色，实际应该由前端传入
+        // 创建新对话
+        if (characterId == null) {
+            throw new IllegalArgumentException("创建新对话时必须指定角色ID");
+        }
+        
         Conversation conversation = new Conversation();
         conversation.setUserId(userId);
-        conversation.setCharacterId(1L); // 默认角色ID
+        conversation.setCharacterId(characterId);
         conversation.setTitle("新对话");
         conversation.setMessageCount(0);
         save(conversation);

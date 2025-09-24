@@ -1,5 +1,6 @@
 package com.ai.roleplay.controller;
 
+import com.ai.roleplay.common.Result;
 import com.ai.roleplay.entity.Character;
 import com.ai.roleplay.entity.CharacterSkill;
 import com.ai.roleplay.service.CharacterService;
@@ -20,19 +21,25 @@ public class CharacterController {
     
     @Operation(summary = "搜索角色")
     @GetMapping("/search")
-    public List<Character> searchCharacters(@RequestParam(required = false) String keyword) {
-        return characterService.searchCharacters(keyword);
+    public Result<List<Character>> searchCharacters(@RequestParam(required = false) String keyword) {
+        List<Character> characters = characterService.searchCharacters(keyword);
+        return Result.success(characters);
     }
     
     @Operation(summary = "获取角色详情")
     @GetMapping("/{id}")
-    public Character getCharacter(@PathVariable Long id) {
-        return characterService.getById(id);
+    public Result<Character> getCharacter(@PathVariable Long id) {
+        Character character = characterService.getById(id);
+        if (character == null) {
+            return Result.error("角色不存在");
+        }
+        return Result.success(character);
     }
     
     @Operation(summary = "获取角色技能")
     @GetMapping("/{id}/skills")
-    public List<CharacterSkill> getCharacterSkills(@PathVariable Long id) {
-        return characterService.getCharacterSkills(id);
+    public Result<List<CharacterSkill>> getCharacterSkills(@PathVariable Long id) {
+        List<CharacterSkill> skills = characterService.getCharacterSkills(id);
+        return Result.success(skills);
     }
 }
