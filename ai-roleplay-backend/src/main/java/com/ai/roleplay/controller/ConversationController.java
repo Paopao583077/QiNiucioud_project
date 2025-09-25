@@ -23,8 +23,10 @@ public class ConversationController {
     @Operation(summary = "发送消息")
     @PostMapping("/chat")
     public Result<ChatResponse> chat(@RequestBody ChatRequest request) {
-        // 这里简化处理，实际应该从JWT中获取用户ID
-        Long userId = 1L;
+        Long userId = com.ai.roleplay.util.SecurityUtil.getCurrentUserId();
+        if (userId == null) {
+            return Result.error("用户未登录");
+        }
         
         if (request.getContent() == null || request.getContent().trim().isEmpty()) {
             return Result.error("消息内容不能为空");
@@ -46,8 +48,10 @@ public class ConversationController {
     @Operation(summary = "获取用户对话列表")
     @GetMapping
     public Result<List<Conversation>> getUserConversations() {
-        // 这里简化处理，实际应该从JWT中获取用户ID
-        Long userId = 1L;
+        Long userId = com.ai.roleplay.util.SecurityUtil.getCurrentUserId();
+        if (userId == null) {
+            return Result.error("用户未登录");
+        }
         List<Conversation> conversations = conversationService.getUserConversations(userId);
         return Result.success(conversations);
     }

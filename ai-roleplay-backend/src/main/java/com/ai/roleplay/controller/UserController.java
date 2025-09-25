@@ -3,17 +3,19 @@ package com.ai.roleplay.controller;
 import com.ai.roleplay.common.Result;
 import com.ai.roleplay.entity.User;
 import com.ai.roleplay.service.UserService;
+import com.ai.roleplay.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Tag(name = "用户管理", description = "用户注册、登录等接口")
 @RestController
@@ -22,7 +24,8 @@ import javax.validation.constraints.Size;
 public class UserController {
     
     private final UserService userService;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
     
     @Operation(summary = "用户注册")
     @PostMapping("/register")
@@ -68,12 +71,14 @@ public class UserController {
             return Result.error("密码错误");
         }
         
-        // 这里简化处理，实际应该生成JWT token
+        // 生成JWT token
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+        
         LoginResponse response = new LoginResponse();
         response.setUserId(user.getId());
         response.setUsername(user.getUsername());
         response.setNickname(user.getNickname());
-        response.setToken("mock-jwt-token-" + user.getId());
+        response.setToken(token);
         
         return Result.success(response);
     }

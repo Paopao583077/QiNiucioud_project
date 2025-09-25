@@ -26,7 +26,13 @@ public class ZhipuAiService {
     @Value("${ai.zhipu.model}")
     private String model;
     
-    public String chat(String systemPrompt, List<Map<String, String>> messages) {
+    @org.springframework.scheduling.annotation.Async("aiTaskExecutor")
+    public java.util.concurrent.CompletableFuture<String> chatAsync(String systemPrompt, List<Map<String, String>> messages) {
+        String result = chatSync(systemPrompt, messages);
+        return java.util.concurrent.CompletableFuture.completedFuture(result);
+    }
+    
+    public String chatSync(String systemPrompt, List<Map<String, String>> messages) {
         try {
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
@@ -69,7 +75,13 @@ public class ZhipuAiService {
         }
     }
     
-    public String chatWithSkill(String characterPrompt, String skillPrompt, String userMessage) {
+    @org.springframework.scheduling.annotation.Async("aiTaskExecutor")
+    public java.util.concurrent.CompletableFuture<String> chatWithSkillAsync(String characterPrompt, String skillPrompt, String userMessage) {
+        String result = chatWithSkillSync(characterPrompt, skillPrompt, userMessage);
+        return java.util.concurrent.CompletableFuture.completedFuture(result);
+    }
+    
+    public String chatWithSkillSync(String characterPrompt, String skillPrompt, String userMessage) {
         String combinedPrompt = characterPrompt + "\n\n" + skillPrompt;
         
         List<Map<String, String>> messages = new ArrayList<>();
@@ -78,6 +90,15 @@ public class ZhipuAiService {
         userMsg.put("content", userMessage);
         messages.add(userMsg);
         
-        return chat(combinedPrompt, messages);
+        return chatSync(combinedPrompt, messages);
+    }
+    
+    // 保持同步方法用于向后兼容
+    public String chat(String systemPrompt, List<Map<String, String>> messages) {
+        return chatSync(systemPrompt, messages);
+    }
+    
+    public String chatWithSkill(String characterPrompt, String skillPrompt, String userMessage) {
+        return chatWithSkillSync(characterPrompt, skillPrompt, userMessage);
     }
 }
